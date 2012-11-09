@@ -27,8 +27,8 @@ CC = gcc
 COMMON_CFLAGS += -O3 -g -Wall -Wextra -Werror \
 		   -ffunction-sections -fdata-sections -MD \
 		   -Wstrict-prototypes -fno-common -fPIC \
-		   -DGIT_VERSION="\"$(GIT_VERSION)\"" -std=gnu99
-CFLAGS += $(COMMON_CFLAGS) -fprofile-arcs -ftest-coverage
+		   -DGIT_VERSION="\"$(GIT_VERSION)\"" -std=gnu99 -fasm-blocks
+CFLAGS += $(COMMON_CFLAGS) -msse3 -march=core2#-fprofile-arcs -ftest-coverage
 ARFLAGS	= rcs
 SRCS = linear_algebra.c \
 			 coord_system.c \
