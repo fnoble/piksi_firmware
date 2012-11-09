@@ -10,7 +10,7 @@
  */
 
 #include <math.h>
-#include <pmmintrin.h>
+#include <tmmintrin.h>
 
 #include "pvt.h"
 #include "prns.h"
