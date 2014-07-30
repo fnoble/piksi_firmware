@@ -22,6 +22,7 @@
 #include <libswiftnav/dgnss_management.h>
 #include <libswiftnav/ambiguity_test.h>
 #include <libswiftnav/stupid_filter.h>
+#include <libswiftnav/linear_algebra.h>
 
 #include <libopencm3/stm32/f4/timer.h>
 #include <libopencm3/stm32/f4/rcc.h>
@@ -51,6 +52,20 @@ u32 obs_output_divisor = 2;
 
 double known_baseline[3] = {0, 0, 0};
 u16 msg_obs_max_size = 104;
+
+bool_t base_pos_known = false;
+double known_base_ecef[3];
+
+void base_pos_callback(u16 sender_id, u8 len, u8 msg[], void* context)
+{
+  (void) context; (void) len; (void) msg; (void) sender_id;
+
+  double *llh = (double *)msg;
+
+  wgsllh2ecef(llh, known_base_ecef);
+
+  base_pos_known = true;
+}
 
 void solution_send_sbp(gnss_solution *soln, dops_t *dops)
 {
@@ -337,8 +352,6 @@ static msg_t solution_thread(void *arg)
         if (!simulation_enabled()) {
           /* Output solution. */
           solution_send_sbp(&position_solution, &dops);
-          solution_send_nmea(&position_solution, &dops,
-                             n_ready_tdcp, nav_meas_tdcp);
         }
 
         /* If we have a recent set of observations from the base station, do a
@@ -545,6 +558,17 @@ void process_matched_obs(u8 n_sds, gps_time_t *t, sdiff_t *sds, double dt)
         sbp_send_msg(MSG_IAR_STATE, sizeof(msg_iar_state_t), (u8 *)&iar_state);
         u8 flags = (dgnss_iar_resolved()) ? 1 : 0;
         solution_send_baseline(t, num_used, b, position_solution.pos_ecef, flags);
+
+        if (base_pos_known) {
+          double rover_ecef[3];
+          double pos_llh[3];
+
+          vector_add(3, known_base_ecef, b, rover_ecef);
+          wgsecef2llh(rover_ecef, pos_llh);
+
+          nmea_gpgga(pos_llh, t, num_used, 2, 1.5);
+        }
+
         break;
       case FILTER_FLOAT:
         dgnss_new_float_baseline(n_sds, sds,
