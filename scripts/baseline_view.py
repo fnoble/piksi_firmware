@@ -39,6 +39,11 @@ class Baseline:
     self.flags = soln[5]
     self.n_sats = soln[6]
 
+class BasePos:
+  def from_binary(self, data):
+    soln = struct.unpack('<3d', data)
+    self.llh = np.array([soln[0], soln[1], soln[2]])
+
 class BaselineView(HasTraits):
   python_console_cmds = Dict()
 
@@ -138,6 +143,11 @@ class BaselineView(HasTraits):
 
   def iar_state_callback(self, data):
     self.num_hyps = struct.unpack('<I', data)[0]
+
+  def base_pos_callback(self, data):
+    bp = BasePos()
+    bp.from_binary(data)
+    print "Base pos", bp.llh
 
   def _baseline_callback_ned(self, data):
     # Updating an ArrayPlotData isn't thread safe (see chaco issue #9), so
@@ -265,6 +275,7 @@ class BaselineView(HasTraits):
     self.link.add_callback(sbp_messages.SBP_BASELINE_ECEF, self._baseline_callback_ecef)
     self.link.add_callback(sbp_messages.IAR_STATE, self.iar_state_callback)
     self.link.add_callback(sbp_messages.SBP_GPS_TIME, self.gps_time_callback)
+    self.link.add_callback(sbp_messages.BASE_POS, self.base_pos_callback)
 
     self.python_console_cmds = {
       'baseline': self
