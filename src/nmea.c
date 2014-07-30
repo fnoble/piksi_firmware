@@ -22,6 +22,7 @@
 #include "peripherals/usart.h"
 #include "sbp.h"
 #include "settings.h"
+#include "peripherals/wt12.h"
 
 /** \addtogroup io
  * \{ */
@@ -48,6 +49,8 @@ void nmea_output(char *s)
     usart_write_dma(&uartb_tx_state, (u8 *)s, strlen(s));
 
   __asm__("CPSIE i;");  /* Re-enable interrupts. */
+
+  wt12_nmea_output(s);
 }
 
 /** Calculate the checksum of an NMEA sentence.

@@ -477,6 +477,8 @@ static msg_t solution_thread(void *arg)
         /* Then we send fake messages. */
         solution_send_sbp(simulation_current_gnss_solution(),
                           simulation_current_dops_solution());
+        nmea_gpgga(simulation_current_gnss_solution(),
+                   simulation_current_dops_solution());
       }
 
       double expected_tow = \
