@@ -514,7 +514,7 @@ static bool init_done = false;
 static bool init_known_base = false;
 static bool reset_iar = false;
 
-void process_matched_obs(u8 n_sds, gps_time_t *t, sdiff_t *sds, double dt)
+void process_matched_obs(u8 n_sds, gps_time_t *t, sdiff_t *sds)
 {
   (void)n_sds; (void)sds;
 
@@ -536,7 +536,7 @@ void process_matched_obs(u8 n_sds, gps_time_t *t, sdiff_t *sds, double dt)
     if (n_sds > 4) {
       /* Initialize filters. */
       printf("Initializing DGNSS filters\n");
-      dgnss_init(n_sds, sds, position_solution.pos_ecef, dt);
+      dgnss_init(n_sds, sds, position_solution.pos_ecef);
       init_done = 1;
     }
   } else {
@@ -545,7 +545,7 @@ void process_matched_obs(u8 n_sds, gps_time_t *t, sdiff_t *sds, double dt)
       reset_iar = false;
     }
     /* Update filters. */
-    dgnss_update(n_sds, sds, position_solution.pos_ecef, dt);
+    dgnss_update(n_sds, sds, position_solution.pos_ecef);
     /* If we are in time matched mode then calculate and output the baseline
      * for this observation. */
     if (dgnss_soln_mode == SOLN_MODE_TIME_MATCHED) {
@@ -573,12 +573,9 @@ void process_matched_obs(u8 n_sds, gps_time_t *t, sdiff_t *sds, double dt)
 
         break;
       case FILTER_FLOAT:
+      case FILTER_OLD_FLOAT:
         dgnss_new_float_baseline(n_sds, sds,
                                  position_solution.pos_ecef, &num_used, b);
-        solution_send_baseline(t, num_used, b, position_solution.pos_ecef, 0);
-        break;
-      case FILTER_OLD_FLOAT:
-        dgnss_float_baseline(&num_used, b);
         solution_send_baseline(t, num_used, b, position_solution.pos_ecef, 0);
         break;
       }
@@ -616,7 +613,7 @@ static msg_t time_matched_obs_thread(void *arg)
             base_obss.n, base_obss.nm,
             sds
         );
-        process_matched_obs(n_sds, &obss->t, sds, 1.0 / soln_freq);
+        process_matched_obs(n_sds, &obss->t, sds);
         chPoolFree(&obs_buff_pool, obss);
         chMtxUnlock();
         break;
